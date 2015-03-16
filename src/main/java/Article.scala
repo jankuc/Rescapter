@@ -1,4 +1,3 @@
-import java.util.Date
 
 class Article() {
   var author: String = ""
@@ -11,6 +10,10 @@ class Article() {
   var perex: String = ""
   var section: String = ""
   //val imageUrls: List[String] = List()
+  
+  def createHtml(): File = {
+    
+  }
   
   override def toString : String = {
     "title: " + title + "\n" +
