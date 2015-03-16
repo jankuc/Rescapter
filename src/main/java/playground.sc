@@ -24,12 +24,10 @@ htmlDriver.login(loginName, loginPwd)
 val art1 = new Article()
 htmlDriver.get(linkBibi)
 //val source = htmlDriver.getPageSource()
-
 //val perex = htmlDriver.executeScript("return arguments[0].innerHTML", htmlDriver.findElement(By.id("perex"))).asInstanceOf[String]
 val rubrika = htmlDriver.getInnerHtmlOfElement(htmlDriver.findElement(By.cssSelector(" #heading > div.l > a > span ")))
-
-
-htmlDriver.getArticle(linkBibi)
+//htmlDriver.getArticle(linkBibi)
+/
 /*
 if (false) {
   htmlDriver.login(loginName, loginPwd)

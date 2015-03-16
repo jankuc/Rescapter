@@ -26,6 +26,11 @@ class HtmlLoginDriver() extends HtmlUnitDriver {
     result
   }
   
+  def getInHtmlOfByElement(by: By) : String = {
+    // TODO
+    "asdf"
+  }
+  
   def getArticle(articleUrl : String): Article = {
     val currentUrl = getCurrentUrl()
     get(articleUrl)
