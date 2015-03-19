@@ -21,11 +21,13 @@ object Rescapter {
     val htmlDriver = new HtmlLoginDriver()
     htmlDriver.get(TOCUrl)
     htmlDriver.login(loginName, loginPasswd)
-    val articleHtmls : List[String] = htmlDriver.findElements(By.cssSelector("div.ow-enclose > div.ow > h2 > a"))
+    htmlDriver.get(TOCUrl)
+    println("Issue has " + htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a")).size() + " articles.")
+    val articleUrls : List[String] = htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a"))
       .asScala.toList
       .map( (x : WebElement) => x.getAttribute("href") )
-      .map(x => htmlDriver.getArticle(x))
-      .map(x => x.createHtml())
+    val articleList = articleUrls.map(x => htmlDriver.getArticle(x))
+    val articleHtmls = articleList.map(x => x.createHtml())
     val issueHtml = makeIssueFromArticles(articleHtmls)
     val writer = new PrintWriter(new File("D:\\projects\\rescapter\\target\\issue.htm"))
     writer.write(issueHtml)
@@ -34,7 +36,7 @@ object Rescapter {
 
   def makeIssueFromArticles(articleHtmls: List[String]) : String = {
     val t = Source.fromFile("D:\\projects\\rescapter\\src\\main\\resources\\issue-template.html").mkString
-    val all = (t::articleHtmls).reduce((x,y) => {xAx.r replaceFirstIn(x, y+"\nxAx")})
+    val all = (t::articleHtmls).reduce((x,y) => {xAx.r replaceFirstIn(x, y+"\n"+xAx)})
     xAx.r replaceFirstIn(all, "")
   }
 
