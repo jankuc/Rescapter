@@ -3,6 +3,8 @@ import com.typesafe.config.ConfigFactory
 import org.openqa.selenium.{WebElement, By}
 import scala.collection.JavaConverters._
 import scala.io.Source
+import java.util.Date
+import java.text.SimpleDateFormat
 
 object Rescapter {
 
@@ -13,6 +15,8 @@ object Rescapter {
   val pathDownloads = System.getProperty("user.home") 
   val xAx = "xxxARTICLExxx"
   
+  val outputFilePath="D:\\projects\\rescapter\\target\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format((new Date)) + ".htm"
+  
   def main(args: Array[String]): Unit ={
     downloadCurrentIssue()
   }
@@ -22,21 +26,24 @@ object Rescapter {
     htmlDriver.get(TOCUrl)
     htmlDriver.login(loginName, loginPasswd)
     htmlDriver.get(TOCUrl)
-    println("Issue has " + htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a")).size() + " articles.")
-    val articleUrls : List[String] = htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a"))
+    logInfo("Beggining the application.")
+    logInfo("Issue has " + htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a")).size() + " articles. Downloading ...")
+    val articleHtmls : List[String] = htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a"))
       .asScala.toList
       .map( (x : WebElement) => x.getAttribute("href") )
-    val articleList = articleUrls.map(x => htmlDriver.getArticle(x))
-    val articleHtmls = articleList.map(x => x.createHtml())
+      .map(x => htmlDriver.getArticle(x))
+      .map(x => x.createHtml())
+    logInfo("Created htmls from articles")
     val issueHtml = makeIssueFromArticles(articleHtmls)
-    val writer = new PrintWriter(new File("D:\\projects\\rescapter\\target\\issue.htm"))
+    val writer = new PrintWriter(new File(outputFilePath))
     writer.write(issueHtml)
     writer.close()
+    logInfo("Created html at "+ outputFilePath +".")
   }
 
   def makeIssueFromArticles(articleHtmls: List[String]) : String = {
     val t = Source.fromFile("D:\\projects\\rescapter\\src\\main\\resources\\issue-template.html").mkString
-    val all = (t::articleHtmls).reduce((x,y) => {xAx.r replaceFirstIn(x, y+"\n"+xAx)})
+    val all = (t::articleHtmls).reduce((x,y) => {xAx.r replaceFirstIn(x, y+"\n" + xAx)})
     xAx.r replaceFirstIn(all, "")
   }
 
@@ -47,5 +54,13 @@ object Rescapter {
 
   def downloadCurrentIssue(): Unit = {
     downloadArticlesFromTOC(urlCurrentIssue)
+  }
+  
+  def logInfo(msg : String): Unit ={
+    println(new Date + " INFO: " + msg)
+  }
+
+  def logError(msg : String): Unit ={
+    println(new Date + " ERROR: " + msg)
   }
 }

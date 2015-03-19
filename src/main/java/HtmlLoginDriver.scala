@@ -12,7 +12,7 @@ class HtmlLoginDriver() extends HtmlUnitDriver {
     loginFormPwd.sendKeys(loginPasswd)
     try {
       loginFormPwd.submit()
-      println("INFO: Login completed")
+      Rescapter.logInfo("Login completed")
     } catch {
       case ex: NoSuchElementException => 
         println("ERROR: Login Failed")
