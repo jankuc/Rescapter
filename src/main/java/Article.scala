@@ -17,19 +17,25 @@ class Article() {
     val t = Source.fromFile("D:\\projects\\rescapter\\src\\main\\resources\\article-template.html").mkString
     val a = new Article()
     a.fillToMatch()
-    a.title.r replaceFirstIn(
-      a.perex.r replaceFirstIn(
-        a.section.r replaceFirstIn(
-          a.url.r replaceFirstIn(
-            a.eleText.r replaceFirstIn(
-              a.date.r replaceFirstIn(
-                a.eleAuthor.r replaceFirstIn(t, eleAuthor),
+    "xxxTOCTITLExxx".r.replaceAllIn(
+    a.title.r.replaceAllIn(
+      a.perex.r.replaceFirstIn(
+        a.section.r.replaceFirstIn(
+          a.url.r.replaceFirstIn(
+            a.eleText.r.replaceFirstIn(
+              a.date.r.replaceFirstIn(
+                a.eleAuthor.r.replaceFirstIn(t, eleAuthor),
                 date),
               eleText),
             url),
           section),
         perex),
-      title)
+      title),
+      title.replace(" ", "_").replace("\"","'"))
+  }
+
+  def makeTOCEntry(fileName : String) :String = {
+    "<div class=\"TOCEntry\"><a href=#" + title.replace(" ", "_").replace("\"","'") + ">" + title + "</a></div>"
   }
   
   def fillToMatch() : Article = {
