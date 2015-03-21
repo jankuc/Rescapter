@@ -38,7 +38,21 @@ class HtmlLoginDriver() extends HtmlUnitDriver {
     art.url = articleUrl
     art.eleHtml = getPageSource()
     art.eleText = getInnerHtmlOfElement(findElement(By.id("text")))
+    
     art.eleAuthor = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > div.author-image")))
+    val w = "width=[0-9]+".r.findFirstIn(art.eleAuthor) match { 
+      case Some(w) => "[0-9]+".r.findFirstIn(w).get.toInt
+      case None => 118
+    }
+    val h = "height=[0-9]+".r.findFirstIn(art.eleAuthor) match {
+      case Some(h) => "[0-9]+".r.findFirstIn(h).get.toInt
+      case None => 118
+    }
+    art.eleAuthor = "width=[0-9]+".r.replaceFirstIn(art.eleAuthor, "width=" + 118*w/h)
+    art.eleAuthor = "height=[0-9]+".r.replaceFirstIn(art.eleAuthor, "height=118")
+    art.eleAuthor = "UL><LI".r.replaceAllIn(art.eleAuthor, "center")
+    art.eleAuthor = "LI></UL".r.replaceAllIn(art.eleAuthor, "center")
+    
     art.author = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > div.author-image > div.author > ul > li > a > span")))
     art.date = getInnerHtmlOfElement(findElement(By.className("date")))
     art.title = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > h1 > a")))

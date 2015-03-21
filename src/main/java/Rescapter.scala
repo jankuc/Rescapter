@@ -1,4 +1,5 @@
-import java.io.{PrintWriter, File}
+import java.io.{OutputStreamWriter, FileOutputStream, PrintWriter, File}
+import java.nio.charset.StandardCharsets
 import com.typesafe.config.ConfigFactory
 import org.openqa.selenium.{WebElement, By}
 import scala.collection.JavaConverters._
@@ -14,6 +15,7 @@ object Rescapter {
   val urlCurrentIssue = "http://respekt.ihned.cz/aktualni-cislo" 
   val pathDownloads = System.getProperty("user.home") 
   val xAx = "xxxARTICLExxx"
+  val xTx = "xxxTOCxxx"
   
   val outputFilePath="D:\\projects\\rescapter\\target\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format((new Date)) + ".htm"
   
@@ -28,14 +30,16 @@ object Rescapter {
     htmlDriver.get(TOCUrl)
     logInfo("Beggining the application.")
     logInfo("Issue has " + htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a")).size() + " articles. Downloading ...")
-    val articleHtmls : List[String] = htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a"))
+    val articles = htmlDriver.findElements(By.cssSelector("#main > div.col12 > div > * > h2 > a"))
       .asScala.toList
       .map( (x : WebElement) => x.getAttribute("href") )
       .map(x => htmlDriver.getArticle(x))
-      .map(x => x.createHtml())
+    val articleTOCEntries = articles.map(a => a.makeTOCEntry(outputFilePath))
+    val articleHtmls = articles.map(x => x.createHtml())
     logInfo("Created htmls from articles")
-    val issueHtml = makeIssueFromArticles(articleHtmls)
-    val writer = new PrintWriter(new File(outputFilePath))
+    val issueHtml = makeTOC(articleTOCEntries, makeIssueFromArticles(articleHtmls))
+    val out = new FileOutputStream(new File(outputFilePath))
+    val writer = new OutputStreamWriter(out, StandardCharsets.ISO_8859_1)
     writer.write(issueHtml)
     writer.close()
     logInfo("Created html at "+ outputFilePath +".")
@@ -47,6 +51,12 @@ object Rescapter {
     xAx.r replaceFirstIn(all, "")
   }
 
+  def makeTOC(articleTOCEntries: List[String], content : String) : String = {
+    val all = (content::articleTOCEntries).reduce((x,y) => {xTx.r replaceFirstIn(x, y+"\n" + xTx)})
+    xTx.r replaceFirstIn(all, "")
+  }
+
+
   def downloadIssue(year: Int, yearsIssue: Int): Unit = {
     val url = "http://respekt.ihned.cz/?p=RA000A&archive[edition_number]=" + yearsIssue + "&archive[year]=" + year
     downloadArticlesFromTOC(url)
@@ -57,10 +67,16 @@ object Rescapter {
   }
   
   def logInfo(msg : String): Unit ={
-    println(new Date + " INFO: " + msg)
+    println(""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date)) + "\tINFO: " + msg)
   }
 
   def logError(msg : String): Unit ={
-    println(new Date + " ERROR: " + msg)
+    println(""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date)) + "\tERROR: " + msg)
   }
+  
+  def makeTOC(outputFilePath : String): Unit ={
+      
+    
+  }
+  
 }
