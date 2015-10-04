@@ -24,18 +24,18 @@ class Article() {
           a.url.r.replaceFirstIn(
             a.eleText.r.replaceFirstIn(
               a.date.r.replaceFirstIn(
-                a.eleAuthor.r.replaceFirstIn(t, eleAuthor),
-                date),
-              eleText),
-            url),
-          section),
-        perex),
-      title),
+                a.eleAuthor.r.replaceFirstIn(t, if (eleAuthor != null) eleAuthor else ""),
+                if (date != null) date else ""),
+              if (eleText != null) eleText else ""),
+            if (url != null) url else ""),
+          if (section != null) section else ""),
+        if (perex!= null) perex else ""),
+      if (title != null) title else ""),
       title.replace(" ", "_").replace("\"","'"))
   }
 
-  def makeTOCEntry(fileName : String) :String = {
-    "<div class=\"TOCEntry\"><a href=#" + title.replace(" ", "_").replace("\"","'") + ">" + title + "</a></div>"
+  def makeTOCEntry() : String = {
+    "<div class=\"TOCEntry\"><a href=#" + title.replace(" ", "_").replace("\"","'") + ">" + section + ": " + title + "</a></div>"
   }
   
   def fillToMatch() : Article = {
@@ -64,6 +64,7 @@ class Article() {
   override def toString : String = {
     "title: " + title + "\n" +
       "author: " + author + "\n" +
+      "eleAuthor: " + eleAuthor + "\n" +
       "date: " + date + "\n" +
       "url: " + url + "\n" +
       "section: " + section + "\n" +

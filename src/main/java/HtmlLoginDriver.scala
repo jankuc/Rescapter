@@ -4,15 +4,14 @@ import org.openqa.selenium.{WebElement, By}
 class HtmlLoginDriver() extends HtmlUnitDriver {
   
   def login(loginName : String, loginPasswd : String): Unit = {
-    val loginbox = findElement(By.id("login-box"))
+    val loginbox = findElement(By.id("frm-loginForm"))
     loginbox.click()
-    val loginFormName = findElement(By.id("l-nm"))
+    val loginFormName = findElement(By.id("frm-loginForm-username"))
     loginFormName.sendKeys(loginName)
-    val loginFormPwd = findElement(By.id("l-pw-p"))
+    val loginFormPwd = findElement(By.id("frm-loginForm-password"))
     loginFormPwd.sendKeys(loginPasswd)
     try {
       loginFormPwd.submit()
-      Rescapter.logInfo("Login completed")
     } catch {
       case ex: NoSuchElementException => 
         println("ERROR: Login Failed")
@@ -31,33 +30,82 @@ class HtmlLoginDriver() extends HtmlUnitDriver {
     "asdf"
   }
   
+  def getMetaContentByName(name : String): String = {
+    findElement(By.xpath("//meta[@name=\"" + name + "\"]")).getAttribute("content")
+  }
+  
   def getArticle(articleUrl : String): Article = {
     val currentUrl = getCurrentUrl()
-    get(articleUrl)
+    try {
+      get(articleUrl)
+    }
+    catch {
+      case e: Exception => 
+    }
     val art = new Article()
     art.url = articleUrl
-    art.eleHtml = getPageSource()
-    art.eleText = getInnerHtmlOfElement(findElement(By.id("text")))
+    //art.eleHtml = getPageSource()
     
-    art.eleAuthor = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > div.author-image")))
-    val w = "width=[0-9]+".r.findFirstIn(art.eleAuthor) match { 
-      case Some(w) => "[0-9]+".r.findFirstIn(w).get.toInt
-      case None => 118
-    }
-    val h = "height=[0-9]+".r.findFirstIn(art.eleAuthor) match {
-      case Some(h) => "[0-9]+".r.findFirstIn(h).get.toInt
-      case None => 118
-    }
-    art.eleAuthor = "width=[0-9]+".r.replaceFirstIn(art.eleAuthor, "width=" + 118*w/h)
-    art.eleAuthor = "height=[0-9]+".r.replaceFirstIn(art.eleAuthor, "height=118")
-    art.eleAuthor = "UL><LI".r.replaceAllIn(art.eleAuthor, "center")
-    art.eleAuthor = "LI></UL".r.replaceAllIn(art.eleAuthor, "center")
+    // AUTHOR
     
-    art.author = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > div.author-image > div.author > ul > li > a > span")))
-    art.date = getInnerHtmlOfElement(findElement(By.className("date")))
-    art.title = getInnerHtmlOfElement(findElement(By.cssSelector("#heading > div.l > h1 > a")))
-    art.perex = getInnerHtmlOfElement(findElement(By.id("perex")))
-    art.section = getInnerHtmlOfElement(findElement(By.cssSelector(" #heading > div.l > a > span ")))
+    try {
+      art.eleAuthor = getMetaContentByName("author")
+      if (art.eleAuthor == null) {
+        try {
+          art.eleAuthor = findElement(By.className("post-author-name")).getText
+        } catch {
+          case e: Exception =>
+        }
+      }
+    } catch  { // TODO  <div class="authorship-names"> <span class="post-author-name">Jan Lukavec</span> </div>
+      case e: Exception =>   
+    }
+    
+    try {
+      art.author = getMetaContentByName("author")
+      if (art.author == null) {
+        try {
+          art.author = findElement(By.className("post-author-name")).getText
+        } catch {
+          case e: Exception => 
+        }
+      }
+    } catch {
+      case e: Exception =>
+    }
+    
+    try {
+      art.date = findElement(By.className("authorship-note")).getText
+    } catch {
+      case e: Exception =>
+    }
+    
+    try {
+      art.title = findElement(By.tagName("h1")).getText
+    }
+    catch {
+      case e: Exception =>
+    }
+    
+    try {
+      art.perex =  getMetaContentByName("description")
+    } catch {
+      case e: Exception => 
+    }
+    
+    try {
+      art.section = findElement(By.className("post-topics")).getText
+    }
+    catch {
+      case e: Exception =>
+    }
+    
+    try {
+      art.eleText = getInnerHtmlOfElement(findElement(By.id("postcontent")))
+    } catch {
+      case e: Exception =>
+    }
+    
     get(currentUrl)
     art
   }
