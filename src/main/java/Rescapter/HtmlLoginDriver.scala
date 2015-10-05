@@ -1,3 +1,5 @@
+package Rescapter;
+
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
 import org.openqa.selenium.{WebElement, By}
 

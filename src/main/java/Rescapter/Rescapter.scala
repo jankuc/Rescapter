@@ -1,3 +1,5 @@
+package Rescapter;
+
 import java.io.{OutputStreamWriter, FileOutputStream, PrintWriter, File}
 import java.nio.charset.StandardCharsets
 import com.typesafe.config.ConfigFactory
@@ -45,7 +47,7 @@ object Rescapter {
     
     val (issueNum, issueYear) = getCurrentIssueNumAndYear()
     val namedIssueHtml = nameIssue(downloadCurrentIssue(), issueNum, issueYear)
-    val tagsToRemove = List("SCRIPT","FIGURE","PICTURE")
+    val tagsToRemove = List("SCRIPT", "SOURCE ","SVG ", "I class=\"image", "DIV class=\"ad view-banner\"")
     val cleanedIssueHtml = (namedIssueHtml :: tagsToRemove).reduce((x,y) => {removeTags(x,y)})
     saveIssueHtml(cleanedIssueHtml)
   }
@@ -94,8 +96,11 @@ object Rescapter {
   }
   
   def nameIssue(content : String, issueNum : Int, issueYear : Int) : String = {
-    xIx.r replaceFirstIn(content, issueNum.toString)
-    xYx.r replaceFirstIn(content, issueYear.toString)
+    xYx.r replaceFirstIn(
+      xIx.r replaceFirstIn(
+        content, 
+        issueNum.toString), 
+      issueYear.toString)
   }
 
 
@@ -118,7 +123,8 @@ object Rescapter {
   }
   
   def removeTags(content : String, tagName : String) : String = {
-    val regex = "<" + tagName + "[a-z,A-Z,0-9, ,\\-,_,=,\",',/]*>([\\s\\S]*?)</" + tagName + ">"
+    //val regex = "<" + tagName + "[a-z,A-Z,á-ž,Á-Ž,0-9, ,\\-,_,=,\",',/,\\(,\\),\\.,:,%]*>([\\s\\S]*?)</" + tagName.split(" ")(0) + ">"
+    val regex = "<" + tagName + "([\\s\\S]*?)</" + tagName.split(" ")(0) + ">"
     regex.r replaceAllIn(content, "")
   }
   
