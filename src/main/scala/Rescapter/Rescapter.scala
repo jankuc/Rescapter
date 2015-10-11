@@ -1,14 +1,15 @@
-package Rescapter;
+package Rescapter
 
-import java.io.{OutputStreamWriter, FileOutputStream, PrintWriter, File}
+import java.io.{File, FileOutputStream, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.{Calendar, Date, GregorianCalendar}
+
 import com.typesafe.config.ConfigFactory
-import org.openqa.selenium.{WebElement, By}
-import scopt.OptionParser
+import org.openqa.selenium.{By, WebElement}
+
 import scala.collection.JavaConverters._
 import scala.io.Source
-import java.util.{Calendar, GregorianCalendar, Date}
-import java.text.SimpleDateFormat
 
 object Rescapter {
 
@@ -22,7 +23,8 @@ object Rescapter {
   val xIx = "xxxIIxxx"
   val xYx = "xxxYYYYxxx"
   
-  val outputFilePath="D:\\projects\\rescapter\\out\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format((new Date)) + ".html"
+  val outputNoPictureFilePath="D:\\projects\\rescapter\\out\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date) + "-noPic.html"
+  val outputPictureFilePath="D:\\projects\\rescapter\\out\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date) + "-Pic.html"
   
   def main(args: Array[String]): Unit = {
     
@@ -47,9 +49,12 @@ object Rescapter {
     
     val (issueNum, issueYear) = getCurrentIssueNumAndYear()
     val namedIssueHtml = nameIssue(downloadCurrentIssue(), issueNum, issueYear)
-    val tagsToRemove = List("SCRIPT", "SOURCE ","SVG ", "I class=\"image", "DIV class=\"ad view-banner\"")
-    val cleanedIssueHtml = (namedIssueHtml :: tagsToRemove).reduce((x,y) => {removeTags(x,y)})
-    saveIssueHtml(cleanedIssueHtml)
+    val tagsToRemove1 = List("SCRIPT", "I class=\"image", "DIV class=\"ad view-banner\"")
+    val cleanedIssueHtml = (namedIssueHtml :: tagsToRemove1).reduce((x,y) => {removeTags(x,y)})
+    saveIssueHtml(cleanedIssueHtml, outputPictureFilePath)
+    val tagsToRemove2 = List("SOURCE ","SVG ")
+    val noPicIssueHtml = (cleanedIssueHtml :: tagsToRemove2).reduce((x,y) => {removeTags(x,y)})
+    saveIssueHtml(noPicIssueHtml,outputNoPictureFilePath)
   }
 
   def downloadArticlesFromTOC(TOCUrl: String): String = {
@@ -76,12 +81,12 @@ object Rescapter {
     issueHtml
   }
    
-  def saveIssueHtml(issueHtml : String) : Unit = { 
-    val out = new FileOutputStream(new File(outputFilePath))
+  def saveIssueHtml(issueHtml : String, path : String) : Unit = { 
+    val out = new FileOutputStream(new File(path))
     val writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)
     writer.write(issueHtml)
     writer.close()
-    logInfo("Created html at "+ outputFilePath +".")
+    logInfo("Created html at "+ path +".")
   }
 
   def makeIssueFromArticles(articleHtmls: List[String]) : String = {
@@ -141,6 +146,6 @@ object Rescapter {
   }
 
 
-  case class Config(issue: Int = -1, year: Int = -1, out: File = new File("."))
+//  case class Config(issue: Int = -1, year: Int = -1, out: File = new File("."))
   
 }

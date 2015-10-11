@@ -4,14 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>groupId</groupId>
+    <groupId>Rescapter</groupId>
     <artifactId>Rescapter</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <start-class>Rescapter</start-class>
+        <start-class>Rescapter.Rescapter</start-class>
     </properties>
 
     <build>
@@ -32,10 +32,10 @@
                     <launchers>
                         <launcher>
                             <id>app</id>
-                            <mainClass>Rescapter</mainClass>
+                            <mainClass>Rescapter.Rescapter</mainClass>
                         </launcher>
                     </launchers>
-                    <sourceDir>src/main/java</sourceDir>
+                    <sourceDir>src/main/scala</sourceDir>
                     <!--<jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>
                         <jvmArg>-Xmx1024m</jvmArg>

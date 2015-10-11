@@ -1,7 +1,7 @@
-package Rescapter;
+package Rescapter
 
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
-import org.openqa.selenium.{WebElement, By}
+import org.openqa.selenium.{By, WebElement}
 
 class HtmlLoginDriver() extends HtmlUnitDriver {
   

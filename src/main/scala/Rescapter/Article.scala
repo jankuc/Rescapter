@@ -1,4 +1,5 @@
-package Rescapter;
+package Rescapter
+
 import scala.io.Source
 
 
