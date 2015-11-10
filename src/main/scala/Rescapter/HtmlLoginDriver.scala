@@ -59,7 +59,7 @@ class HtmlLoginDriver() extends HtmlUnitDriver {
           case e: Exception =>
         }
       }
-    } catch  { // TODO  <div class="authorship-names"> <span class="post-author-name">Jan Lukavec</span> </div>
+    } catch  { 
       case e: Exception =>   
     }
     
