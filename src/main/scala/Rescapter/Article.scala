@@ -21,12 +21,12 @@ class Article() {
     a.fillToMatch()
     "xxxTOCTITLExxx".r.replaceAllIn(
     a.title.r.replaceAllIn(
-      a.perex.r.replaceFirstIn(
-        a.section.r.replaceFirstIn(
-          a.url.r.replaceFirstIn(
-            a.eleText.r.replaceFirstIn(
-              a.date.r.replaceFirstIn(
-                a.eleAuthor.r.replaceFirstIn(t, if (eleAuthor != null) eleAuthor else ""),
+      a.perex.r.replaceAllIn(
+        a.section.r.replaceAllIn(
+          a.url.r.replaceAllIn(
+            a.eleText.r.replaceAllIn(
+              a.date.r.replaceAllIn(
+                a.eleAuthor.r.replaceAllIn(t, if (eleAuthor != null) eleAuthor else ""),
                 if (date != null) date else ""),
               if (eleText != null) eleText else ""),
             if (url != null) url else ""),
