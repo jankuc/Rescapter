@@ -11,11 +11,16 @@ import org.openqa.selenium.{By, WebElement}
 import scala.collection.JavaConverters._
 import scala.io.Source
 
+import scala.sys.process._
+
 object Rescapter {
 
   val conf = ConfigFactory.parseFile(new File("D:\\projects\\rescapter\\src\\main\\resources\\rescapter.conf"))
   val loginName = conf.getString("respekt-login.user")
   val loginPasswd = conf.getString("respekt-login.password")
+  val pathToPandocExe = conf.getString("system-vars.path_to_pandoc_exe")
+  val pathToKindlegenExe = conf.getString("system-vars.path_to_kindlegen_exe")
+  
   val urlCurrentIssue = "http://respekt.cz/tydenik/2015/32" 
   val pathDownloads = System.getProperty("user.home") 
   val xAx = "xxxARTICLExxx"
@@ -23,8 +28,11 @@ object Rescapter {
   val xIx = "xxxIIxxx"
   val xYx = "xxxYYYYxxx"
   
-  val outputNoPictureFilePath="D:\\projects\\rescapter\\out\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date) + "-noPic.html"
-  val outputPictureFilePath="D:\\projects\\rescapter\\out\\Respekt_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date) + "-Pic.html"
+  val dateTime =  new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date)
+  
+  val outDirPath = "D:\\projects\\rescapter\\out\\"
+  val outputNoPictureFilePath= outDirPath + "Respekt_" + dateTime + "-noPic.html"
+  val outputPictureFilePath= outDirPath + "Respekt_" + dateTime + "-Pic.html"
   
   def main(args: Array[String]): Unit = {
     
@@ -48,13 +56,24 @@ object Rescapter {
     }*/ 
     
     val (issueNum, issueYear) = getCurrentIssueNumAndYear()
+    val outputEpubFilePath = outDirPath + "Respekt_" + issueYear + "_" + issueNum + ".epub"
     val namedIssueHtml = nameIssue(downloadCurrentIssue(), issueNum, issueYear)
-    val tagsToRemove1 = List("SCRIPT", "I class=\"image", "DIV class=\"ad view-banner\"")
+    
+    // Saves the issue with Pictures
+    val tagsToRemove1 = List("SCRIPT", "I class=\"image", "DIV class=\"ad view-banner\"", "DIV class=ad-content")
     val cleanedIssueHtml = (namedIssueHtml :: tagsToRemove1).reduce((x,y) => {removeTags(x,y)})
     saveIssueHtml(cleanedIssueHtml, outputPictureFilePath)
+
+    // Saves the issue without some of the Pictures
     val tagsToRemove2 = List("SOURCE ","SVG ")
     val noPicIssueHtml = (cleanedIssueHtml :: tagsToRemove2).reduce((x,y) => {removeTags(x,y)})
     saveIssueHtml(noPicIssueHtml,outputNoPictureFilePath)
+
+    // Creates epub and mobi editions
+    val epubCreated = pathToPandocExe + " -t epub " + outputNoPictureFilePath + 
+      " --toc-depth=2 -o  " + outputEpubFilePath !
+    val mobiCreated = pathToKindlegenExe + " " + outputEpubFilePath !
+    
   }
 
   def downloadArticlesFromTOC(TOCUrl: String): String = {
@@ -66,16 +85,26 @@ object Rescapter {
     logInfo("Login completed")
     htmlDriver.get(TOCUrl)
 
-    val articleAHrefs = htmlDriver.findElements(By.className("issuedetail-categorized-item"))
-    articleAHrefs.addAll(htmlDriver.findElements(By.className("issuedetail-highlighted-item")))
-
+    // get links to all articles in this issue
+    val articleAHrefs = htmlDriver.findElements(By.className("issuedetail-highlighted-item"))
+    articleAHrefs.addAll(htmlDriver.findElements(By.className("issuedetail-categorized-item")))
+    
+    // get all the article contents
     logInfo("Issue has " + articleAHrefs.size() + " articles. Downloading ...")
-    val articles = articleAHrefs
+    val articles : List[Article] = articleAHrefs
       .asScala.toList
       .map((x: WebElement) => x.getAttribute("href"))
-      .map(x => htmlDriver.getArticle(x))
-    val articleTOCEntries = articles.map(a => a.makeTOCEntry())
-    val articleHtmls = articles.map(x => x.createHtml())
+      .map((y: String) => htmlDriver.getArticle(y))
+    
+    // list of sections in the correct order. Everything not specified will be added at the end of the list
+    val sectionsList = List("Editorial", "Despekt", "Anketa", "Dopis z", "Lidé", "Dopisy", "Komentáře", "Téma", "Fokus", "Rozhovor", "Kultura", "Civilizace", "Místa, kde se potkáváme", "Od věci", "Jeden den v životě", "Komiks", "Minulý týden", "Připravujeme")
+    
+    val knownSectionArticles = sectionsList.map(sec => articles.filter(_.section.contains(sec))) flatten
+    val unknownSectionArticles  = articles.filter(art => sectionsList.forall(sec => !art.section.contains(sec)))
+    val sortedArticles = knownSectionArticles ::: unknownSectionArticles 
+    
+    val articleTOCEntries = sortedArticles.map(a => a.makeTOCEntry())
+    val articleHtmls = sortedArticles.map(x => x.createHtml())
     logInfo("Created htmls from articles")
     val issueHtml = makeTOC(articleTOCEntries, makeIssueFromArticles(articleHtmls))
     issueHtml
@@ -128,7 +157,6 @@ object Rescapter {
   }
   
   def removeTags(content : String, tagName : String) : String = {
-    //val regex = "<" + tagName + "[a-z,A-Z,á-ž,Á-Ž,0-9, ,\\-,_,=,\",',/,\\(,\\),\\.,:,%]*>([\\s\\S]*?)</" + tagName.split(" ")(0) + ">"
     val regex = "<" + tagName + "([\\s\\S]*?)</" + tagName.split(" ")(0) + ">"
     regex.r replaceAllIn(content, "")
   }
