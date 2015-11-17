@@ -33,13 +33,18 @@ class Article() {
           if (section != null) section else ""),
         if (perex!= null) perex else ""),
       if (title != null) title else ""),
-      title.replace(" ", "_").replace("\"","'"))
+      title.hashCode.toString)
   }
 
-  def makeTOCEntry() : String = {
-    "<div class=\"TOCEntry\"><a href=#" + title.replace(" ", "_").replace("\"","'") + ">" + section + ": " + title + "</a></div>"
+  def createTOCEntry() : String = {
+    "<div class=\"TOCEntry\"><a href=\"#" + title.hashCode.toString + "\">" + section + ": " + title + "</a></div>"
   }
-  
+
+  def createNextEntry() : String = {
+    "<div class=\"nextEntry\"><a href=\"#" + title.hashCode.toString + "\">" + "Další: " + title + "</a></div>"
+  }
+
+
   def fillToMatch() : Article = {
     eleAuthor = "xxxELEAUTHORxxx"
     section = "xxxSECTIONxxx"

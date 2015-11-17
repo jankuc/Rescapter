@@ -27,6 +27,7 @@ object Rescapter {
   val xTx = "xxxTOCxxx"
   val xIx = "xxxIIxxx"
   val xYx = "xxxYYYYxxx"
+  val xNx = "xxxNEXTxxx"
   
   val dateTime =  new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date)
   
@@ -99,14 +100,16 @@ object Rescapter {
     // list of sections in the correct order. Everything not specified will be added at the end of the list
     val sectionsList = List("Editorial", "Despekt", "Anketa", "Dopis z", "Lidé", "Dopisy", "Komentáře", "Téma", "Fokus", "Rozhovor", "Kultura", "Civilizace", "Místa, kde se potkáváme", "Od věci", "Jeden den v životě", "Komiks", "Minulý týden", "Připravujeme")
     
+    // TODO: Warning: 'Kultura * Komiks' is twice in the filtering, Tema can be too, if it's e.g. Kultura -> make unique and/or enable wiser sectionList (tuples (stringItHastoContain,StringItCannotContain) ) 
     val knownSectionArticles = sectionsList.map(sec => articles.filter(_.section.contains(sec))) flatten
     val unknownSectionArticles  = articles.filter(art => sectionsList.forall(sec => !art.section.contains(sec)))
     val sortedArticles = knownSectionArticles ::: unknownSectionArticles 
     
-    val articleTOCEntries = sortedArticles.map(a => a.makeTOCEntry())
+    // TODO: Add H1 sections (titles) Komentáře, Téma, Fokus, Rozhovor, Kultura
     val articleHtmls = sortedArticles.map(x => x.createHtml())
     logInfo("Created htmls from articles")
-    val issueHtml = makeTOC(articleTOCEntries, makeIssueFromArticles(articleHtmls))
+    val articleNextLinks : List[String] = sortedArticles.map(x => x.createNextEntry())
+    val issueHtml = makeNextLinks(articleNextLinks.tail, makeIssueFromArticles(articleHtmls))
     issueHtml
   }
    
@@ -127,6 +130,11 @@ object Rescapter {
   def makeTOC(articleTOCEntries: List[String], content : String) : String = {
     val all = (content::articleTOCEntries).reduce((x,y) => {xTx.r replaceFirstIn(x, y+"\n" + xTx)})
     xTx.r replaceFirstIn(all, "")
+  }
+
+  def makeNextLinks(articleNextEntries: List[String], content : String) : String = {
+    val all = (content::articleNextEntries).reduce((x,y) => {xNx.r replaceFirstIn(x, y)})
+    xNx.r replaceFirstIn(all, "")
   }
   
   def nameIssue(content : String, issueNum : Int, issueYear : Int) : String = {
