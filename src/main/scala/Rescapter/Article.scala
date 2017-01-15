@@ -16,7 +16,12 @@ class Article() {
   //val imageUrls: List[String] = List()
 
   def createHtml(): String = {
-    val t = Source.fromFile("D:\\projects\\rescapter\\src\\main\\resources\\article-template.html").mkString
+    val possibleTmplFilePaths =
+      "src/main/resources/article-template.html" ::
+        "article-template.html" ::
+        "../../src/main/resources/article-template.html" ::
+        Nil
+    val t = Source.fromFile(Rescapter.getConfIfExists(possibleTmplFilePaths, "article-template.html")).mkString
     val a = new Article()
     a.fillToMatch()
     "xxxTOCTITLExxx".r.replaceAllIn(

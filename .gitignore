@@ -20,3 +20,4 @@ output/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+.idea/
