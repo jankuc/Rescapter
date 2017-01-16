@@ -16,7 +16,7 @@ class Article() {
   //val imageUrls: List[String] = List()
 
   def createHtml(): String = {
-    val possibleTmplFilePaths =
+    val possibleTmplFilePaths : List[String] =
       "src/main/resources/article-template.html" ::
         "article-template.html" ::
         "../../src/main/resources/article-template.html" ::

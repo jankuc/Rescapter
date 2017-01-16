@@ -13,6 +13,8 @@ import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
 
+import mail._
+
 object Rescapter {
 
   def getConfIfExists(paths: List[String], fileName: String = ""): File = {
@@ -29,7 +31,7 @@ object Rescapter {
     }
   }
 
-  val possibleConfFilePaths: Seq[String] =
+  val possibleConfFilePaths: List[String] =
     "src/main/resources/rescapter.conf" ::
       "rescapter.conf" ::
       "../../src/main/resources/rescapter.conf" ::
@@ -41,9 +43,20 @@ object Rescapter {
   val loginPasswd = conf.getString("respekt-login.password")
   val pathToPandocExe = conf.getString("system-vars.path_to_pandoc_exe")
   val pathToKindlegenExe = conf.getString("system-vars.path_to_kindlegen_exe")
-  
-  val urlCurrentIssue = "http://respekt.cz/tydenik/2015/32" 
-  val pathDownloads = System.getProperty("user.home") 
+
+  val emailSmtpHostName = conf.getString("email-send.host_name")
+  val emailSmtpPort = conf.getString("email-send.smtp_port")
+  val emailAddress = conf.getString("email-send.email")
+  val emailPassword = conf.getString("email-send.password")
+  val emailFromName = conf.getString("email-send.from_name")
+  val emailBccHtml = conf.getString("email-send.bcc_list_html")
+  val emailBccEpub = conf.getString("email-send.bcc_list_epub")
+  val emailToMobi = conf.getString("email-send.to_list_mobi")
+
+  val averageLineThreshold = 100
+
+  val urlCurrentIssue = "http://respekt.cz/tydenik/2015/32"
+  val pathDownloads = System.getProperty("user.home")
   val xAx = "xxxARTICLExxx"
   val xTx = "xxxTOCxxx"
   val xIx = "xxxIIxxx"
@@ -58,7 +71,7 @@ object Rescapter {
   val outputPictureFilePath = outDirPath + "Respekt_" + dateTime + "-Pic.html"
 
   def main(args: Array[String]): Unit = {
-    
+
     /*val parser = new OptionParser[Config]("rescapter") {
       head("rescapter")
       opt[Int]('i', "issue") action { (x, c) =>
@@ -67,17 +80,13 @@ object Rescapter {
         c.copy(issue = x) } text("year: optional")
       opt[File]('o', "out") required() valueName("<file>") action { (x, c) =>
         c.copy(out = x) } text("out: required output file path")
-        
       }
-
     parser.parse(args, Config()) match {
-      case Some(config) =>
-      // do stuff
-
-      case None =>
-      // arguments are bad, error message will have been displayed
+      case Some(config) => // do stuff
+      case None => // arguments are bad, error message will have been displayed
     }*/
 
+    // Testing that /out/ folder exists, also kindlegen.exe and pandoc.exe
     if (!new File(outDirPath).exists()) {
       new File(outDirPath).mkdir()
     }
@@ -86,6 +95,7 @@ object Rescapter {
 
     val (issueNum, issueYear) = getCurrentIssueNumAndYear()
     val outputEpubFilePath = outDirPath + "Respekt_" + issueYear + "_" + issueNum + ".epub"
+    val outputMobiFilePath = outputEpubFilePath.replaceFirst("(epub$)", "mobi")
     val namedIssueHtml = nameIssue(downloadCurrentIssue(), issueNum, issueYear)
 
     // Saves the issue with Pictures
@@ -103,17 +113,39 @@ object Rescapter {
     saveIssueHtml(noPicIssueHtml, outputNoPictureFilePath)
 
     // Creates epub and mobi editions
-    if (!new File(pathToPandocExe).exists()) {
-      throw new FileNotFoundException("Pandoc.exe not found at " + pathToPandocExe)
-    }
     val epubCreated = pathToPandocExe + " -t epub " + outputNoPictureFilePath +
-      " --toc-depth=2 -o " + outputEpubFilePath ! ;
-    if (!new File(pathToKindlegenExe).exists()) {
-      throw new FileNotFoundException("KindleGen.exe not found at " + pathToKindlegenExe)
-    }
-    val mobiCreated = pathToKindlegenExe + " " + outputEpubFilePath + " -verbose" ! ;
+      " --toc-depth=2 -o " + outputEpubFilePath !;
+    val mobiCreated = pathToKindlegenExe + " " + outputEpubFilePath + " -verbose" !;
 
+    // TODO calculate average length of line in output html, if it is more than threshold then send emails
+    val averageLineLength = 50
+    if (averageLineLength > averageLineThreshold) {
+      sendEmail(outputPictureFilePath, "", emailBccHtml, "Respekt")
+    } else {
+      throw new Exception("Html doesn't seem all right.")
+    }
+
+    if (epubCreated == 0) {
+      sendEmail(outputEpubFilePath, "", emailBccEpub, "Respekt epub")
+    }
+
+    if (epubCreated == 0 & mobiCreated < 2) {
+      sendEmail(outputMobiFilePath, emailToMobi, "", "")
+    }
   }
+
+
+  def sendEmail(attachmentPath: String, to: String, bcc: String, subject: String) {
+    send a new Mail(
+      from = (emailAddress, emailFromName),
+      to = to,
+      bcc = bcc,
+      subject = subject,
+      message = "",
+      attachment = new java.io.File(attachmentPath)
+    )
+  }
+
 
   def downloadArticlesFromTOC(TOCUrl: String): String = {
     logInfo("Beggining the application.")
@@ -160,7 +192,7 @@ object Rescapter {
   }
 
   def makeIssueFromArticles(articleHtmls: List[String]): String = {
-    val possibleTmplFilePaths =
+    val possibleTmplFilePaths: List[String] =
       "src/main/resources/issue-template.html" ::
         "issue-template.html" ::
         "../../src/main/resources/issue-template.html" ::
@@ -232,5 +264,5 @@ object Rescapter {
 
 
 //  case class Config(issue: Int = -1, year: Int = -1, out: File = new File("."))
-  
+
 }
