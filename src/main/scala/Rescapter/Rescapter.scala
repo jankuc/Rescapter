@@ -53,7 +53,7 @@ object Rescapter {
   val emailBccEpub = conf.getString("email-send.bcc_list_epub")
   val emailToMobi = conf.getString("email-send.to_list_mobi")
 
-  val averageLineThreshold = 100
+  val averageLineThreshold = 1200
 
   val urlCurrentIssue = "http://respekt.cz/tydenik/2015/32"
   val pathDownloads = System.getProperty("user.home")
@@ -71,20 +71,6 @@ object Rescapter {
   val outputPictureFilePath = outDirPath + "Respekt_" + dateTime + "-Pic.html"
 
   def main(args: Array[String]): Unit = {
-
-    /*val parser = new OptionParser[Config]("rescapter") {
-      head("rescapter")
-      opt[Int]('i', "issue") action { (x, c) =>
-        c.copy(issue = x) } text("issue: optional issue's number")
-      opt[Int]('y', "year") action { (x, c) =>
-        c.copy(issue = x) } text("year: optional")
-      opt[File]('o', "out") required() valueName("<file>") action { (x, c) =>
-        c.copy(out = x) } text("out: required output file path")
-      }
-    parser.parse(args, Config()) match {
-      case Some(config) => // do stuff
-      case None => // arguments are bad, error message will have been displayed
-    }*/
 
     // Testing that /out/ folder exists, also kindlegen.exe and pandoc.exe
     if (!new File(outDirPath).exists()) {
@@ -117,18 +103,19 @@ object Rescapter {
       " --toc-depth=2 -o " + outputEpubFilePath !;
     val mobiCreated = pathToKindlegenExe + " " + outputEpubFilePath + " -verbose" !;
 
-    // TODO calculate average length of line in output html, if it is more than threshold then send emails
-    val averageLineLength = 50
+    // Check that the file has reasonably long lines (does not have articles cutoff in the middle due to failed login)
+    val linesLengths = Source.fromFile(outputNoPictureFilePath, "UTF-8").getLines.toList.map(x => x.length).filter(l => l > 100)
+    val averageLineLength = linesLengths.reduce((a,b)=>a+b)*1.0/linesLengths.length
+
+    // Send Emails
     if (averageLineLength > averageLineThreshold) {
       sendEmail(outputPictureFilePath, "", emailBccHtml, "Respekt")
     } else {
       throw new Exception("Html doesn't seem all right.")
     }
-
     if (epubCreated == 0) {
       sendEmail(outputEpubFilePath, "", emailBccEpub, "Respekt epub")
     }
-
     if (epubCreated == 0 & mobiCreated < 2) {
       sendEmail(outputMobiFilePath, emailToMobi, "", "")
     }
@@ -261,8 +248,4 @@ object Rescapter {
   def log(msg: String, msgType: String): Unit = {
     println("" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\t" + msgType + ": " + msg)
   }
-
-
-//  case class Config(issue: Int = -1, year: Int = -1, out: File = new File("."))
-
 }
