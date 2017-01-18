@@ -44,14 +44,14 @@ object Rescapter {
   val pathToPandocExe = conf.getString("system-vars.path_to_pandoc_exe")
   val pathToKindlegenExe = conf.getString("system-vars.path_to_kindlegen_exe")
 
-  val emailSmtpHostName = conf.getString("email-send.host_name")
-  val emailSmtpPort = conf.getString("email-send.smtp_port")
-  val emailAddress = conf.getString("email-send.email")
-  val emailPassword = conf.getString("email-send.password")
-  val emailFromName = conf.getString("email-send.from_name")
-  val emailBccHtml = conf.getString("email-send.bcc_list_html")
-  val emailBccEpub = conf.getString("email-send.bcc_list_epub")
-  val emailToMobi = conf.getString("email-send.to_list_mobi")
+  val emailSmtpHostName = conf.getString("email-setup.host_name")
+  val emailSmtpPort = conf.getString("email-setup.smtp_port")
+  val emailAddress = conf.getString("email-setup.email")
+  val emailPassword = conf.getString("email-setup.password")
+  val emailFromName = conf.getString("email-setup.from_name")
+  val emailBccHtml = conf.getString("email-setup.bcc_list_html")
+  val emailBccEpub = conf.getString("email-setup.bcc_list_epub")
+  val emailToMobi = conf.getString("email-setup.to_list_mobi")
 
   val averageLineThreshold = 1200
 
@@ -110,14 +110,17 @@ object Rescapter {
     // Send Emails
     if (averageLineLength > averageLineThreshold) {
       sendEmail(outputPictureFilePath, "", emailBccHtml, "Respekt")
+      logInfo("Email with HTML sent to: " + emailBccHtml)
     } else {
       throw new Exception("Html doesn't seem all right.")
     }
     if (epubCreated == 0) {
       sendEmail(outputEpubFilePath, "", emailBccEpub, "Respekt epub")
+      logInfo("Email with EPUB sent to: " + emailBccEpub)
     }
     if (epubCreated == 0 & mobiCreated < 2) {
       sendEmail(outputMobiFilePath, emailToMobi, "", "")
+      logInfo("Email with MOBI sent to: " + emailToMobi)
     }
   }
 
